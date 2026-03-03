@@ -125,6 +125,7 @@ This project is analyzed through **two complementary tracks**:
 	- Action: keep as “Unknown” or leave missing
 - **Duplicates:** check key (`report_month`, `product_id`, `source_id`)  
   - If duplicates appear mostly in `payment_group` = refund and `volumes` differ -> treat as **valid business events**, not data errors
+
 - 🔎 Data Validation
 
 	- Verified `report_month` is a proper datetime field with no invalid or missing months.
@@ -154,7 +155,7 @@ This project is analyzed through **two complementary tracks**:
 **📌 Dataset Overview (`transactions.csv`)**
 - **Size:** 1,324,002 rows × 9 columns
 - **Analytical grain:** 1 row = 1 transaction
-- **Fields:** `transaction_id`, `merchant_id`, `volume`, `transType`, `sender_id`, `receiver_id`,`transStatus`,`extra_info` ,`timeStamp`)
+- **Fields:** `transaction_id`, `merchant_id`, `volume`, `transType`, `sender_id`, `receiver_id`,`transStatus`,`extra_info` ,`timeStamp`
 
 #### B1) Data Loading & Preparation 🧹
 
@@ -265,6 +266,7 @@ This suggests exact duplicate records rather than legitimate repeated business e
 ```python
 df['volume'].describe()
 ```
+<img width="371" height="329" alt="Ảnh màn hình 2026-03-03 lúc 19 27 23" src="https://github.com/user-attachments/assets/02c07ae4-27f3-4fbc-b11d-9be9e4e907cc" />
 
 
 </details>
@@ -293,7 +295,6 @@ No type conversion required.
 
 #### 💰 Transaction Amount (`volume`)
 - All values are positive.
-- Distribution is right-skewed, which is typical for financial transaction data.
 - No unrealistic or abnormal negative values detected.
 
 ---
