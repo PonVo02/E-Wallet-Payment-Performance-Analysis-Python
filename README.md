@@ -86,165 +86,83 @@ Key Relationships
 | `timeStamp` | TIMESTAMP | Transaction timestamp |
 
 ---
-## 🗝️ Main Process
-## 1️⃣. Dataset payment_enriched
-- The `payment_enriched` dataset is created by merging:
-  - `payment_report.csv` : monthly payment volume by product
-  - `product.csv`: which contains product metadata such as (category, team ownership)
-Each record represents the payment volume of a specific product in a given month and source.
+## 🛠️ Main Process
 
-**Cell Code**
-```pyhton
-import pandas as pd
+This project is analyzed through **two complementary tracks**:
 
-payment = pd.read_csv('/content/payment_report.csv')
-product = pd.read_csv('/content/product.csv')
-
-payment_enriched = payment.merge(
-    product,
-    on = 'product_id',
-    how = 'left',
-    validate = 'm:1')
-```
-
-
-### **1.1 Overview**
-
-Check the overall data
-
-**Cell code**
-```python
-payment_enriched.head()
-```
-**Output**
-
-<img width="824" height="210" alt="Ảnh màn hình 2026-03-02 lúc 13 27 14" src="https://github.com/user-attachments/assets/1cf0ed07-2776-4f57-9dab-d288974db7c2" />
-
----
-**Cell code**
-```python
-payment_enriched.info()
-```
-
-**Output**
-
-<img width="802" height="252" alt="Ảnh màn hình 2026-03-02 lúc 13 30 20" src="https://github.com/user-attachments/assets/8dbdbbf5-617e-4a8f-aa4a-d38796d970a3" />
-
-- Observed data types:
-
-  - **report_month:** object (string – year-month format)
-  - **payment_group:** object
-  - **category, team_own:** object
-  - **product_id, source_id:** int64 (identifiers)
-  - **volume:** int64 (numeric metric)
-- Assessment:
-  - All data types are consistent with their business meaning.
-  - No type conversion is required at this stage.
--> Next step: No action
-
-
-### 1.2 Data Validation
-**Missing Data**
-**Cell code**
-```python
-payment_enriched.isna().sum()
-```
-**Output**
-
-<img width="851" height="304" alt="Ảnh màn hình 2026-03-02 lúc 13 37 29" src="https://github.com/user-attachments/assets/cf13425a-0fcb-4c42-9292-f3f90acffe22" />
+- **Track A — `payment_enriched` (Monthly Payment Performance):** combines `payment_report.csv` with product metadata from `product.csv` to analyze **payment volume by month / product / source / payment_group**.
+- **Track B — `transactions` (Transaction-level Behavior):** uses `transactions.csv` to analyze **user/system transaction behavior, status outcomes, and operational patterns**.
 
 ---
 
+### ✅ Track A — Build & Analyze `payment_enriched` (Payment Report + Product)
 
-**Cell code**
-```python
-payment_enriched[payment_enriched['category'].isna()][['product_id']].head()
-```
-**Output**
+#### A1) Data Loading & Join 🔗
+- Load `product.csv` and `payment_report.csv`
+- Create `payment_enriched` using **LEFT JOIN on `product_id`**
+- Ensure product metadata (`category`, `team_own`) is available for segmentation
 
-<img width="714" height="198" alt="Ảnh màn hình 2026-03-02 lúc 13 40 00" src="https://github.com/user-attachments/assets/f58de7a0-7cf2-4802-a2bb-157ceb50976d" />
+#### A2) Data Quality Checks 🧪
+- **Missing values:** check `category`, `team_own` after join
+	- Interpretation: missing values likely come from `product_id` not found in `product.csv` (unmatched metadata)
+	- Action: keep as “Unknown” or leave missing (no hard drop unless needed)
+- **Duplicates:** check key (`report_month`, `product_id`, `source_id`)  
+  - If duplicates appear mostly in `payment_group` = refund and `volumes` differ -> treat as **valid business events**, not data errors
+- 🔎 Data Validation
 
----
+	- Verified `report_month` is a proper datetime field with no invalid or missing months.
 
-**Cell code**
-```python
-(payment_enriched['category'].isna() & payment_enriched['team_own'].isna()).sum()
-```
-**Output**
+	- Checked `volume` is numeric and contains no negative or unrealistic values.
+<details>
+	<summary>👉🏻 Show value missing </summary>
+<img width="294" height="307" alt="Ảnh màn hình 2026-03-02 lúc 16 12 53" src="https://github.com/user-attachments/assets/6aec230d-e796-4b90-8fc1-aae6d1571481" />
+</details>
 
-<img width="833" height="34" alt="Ảnh màn hình 2026-03-02 lúc 13 40 45" src="https://github.com/user-attachments/assets/36641de6-a696-4f79-a262-7f59c300b02b" />
-
-- Missing data:
-
-  - **category:** 22 rows missing
-  - **team_own:** 22 rows missing
-  - Missing values occur together on the same records.
-Interpretation: Because `payment_enriched` is created using a LEFT JOIN on `product_id`, these missing values likely come from `product_id` that do not exist in `product.csv` (unmatched product metadata).
-
--> Next step: No action
+<details>
+	<summary>👉🏻 Show Duplicates </summary>
+<img width="1008" height="337" alt="Ảnh màn hình 2026-03-02 lúc 16 25 06" src="https://github.com/user-attachments/assets/da691bcf-2cb4-4119-9078-961228e7b4fa" />  
+</details>
 
 
-**Duplicates**
+<details>
+	<summary>👉🏻 Show describe "volume" </summary>
+<img width="550" height="334" alt="Ảnh màn hình 2026-03-02 lúc 16 37 06" src="https://github.com/user-attachments/assets/9292f94d-aa5a-4c5a-92e2-73d714709fa4" />
+</details>
 
-**Cell code**
-```python
-payment_enriched.duplicated(
-    subset = ['report_month', 'product_id', 'source_id']).sum()
-```
-
-**Output**
-
-<img width="553" height="32" alt="Ảnh màn hình 2026-03-02 lúc 14 26 47" src="https://github.com/user-attachments/assets/0596ddc5-fb5d-4703-a692-c8f3bccee0b7" />
 
 ---
 
-**Cell code**
+### ✅ Track B — Analyze `transactions` Dataset (Transaction-level)
+
+**📌 Dataset Overview (`transactions.csv`)**
+- **Size:** 1,324,002 rows × 9 columns  
+- **Analytical grain:** 1 row = 1 transaction event  
+- **Fields:** amount (`volume`), transaction type (`transType`), sender/receiver (`sender_id`, `receiver_id`), status (`transStatus`), timestamp (`timeStamp`)
+
+#### B1) Data Loading & Preparation 🧹
+
+- Load `transactions.csv`
+- Convert `timeStamp` from milliseconds to datetime for time-based analysis (trend, peak time)
+
+<details>
+<summary>👉🏻 Show code & output (timestamp conversion + sample rows)</summary>
+
 ```python
-# Inspect duplicated records
-payment_enriched[
-    payment_enriched.duplicated(
-        subset=['report_month', 'product_id', 'source_id'],
-        keep = False)
-].sort_values(['product_id', 'report_month'])
+df["timeStamp"] = pd.to_datetime(df["timeStamp"], unit="ms")
+df.head()
 ```
-**Output**
+<img width="1136" height="203" alt="Ảnh màn hình 2026-03-02 lúc 16 45 47" src="https://github.com/user-attachments/assets/c4ca1bfb-992b-479a-a713-e1a91c8c5bf2" />
 
-<img width="876" height="332" alt="Ảnh màn hình 2026-03-02 lúc 14 28 09" src="https://github.com/user-attachments/assets/6715fc0b-90cb-4c10-9a10-4c0f7cdd07ef" />
+</details>
 
-**Duplicate analysis:** `payment_enriched`
-**Key checked:** (`report_month`, `product_id`, `source_id`)
+#### B2) Data Quality Checks 🧪
+- Missing `sender_id` / `receiver_id`:
+  - Treat as potential **system-generated transactions** (e.g., top-up, refund, cashback)  
+  - Validate by checking distribution of `transType` and `transStatus` for missing-ID records
+- Validate `volume`, `transStatus`, `transType` are consistent with business meaning
 
-- Findings:
 
-  - 5 duplicated records detected.
-  - Duplicates are mainly related to `refund` payment_group.
-  - Volumes are different across duplicated rows, indicating valid business events rather than data duplication errors.
-- Interpretation:
+---
 
-  - Multiple payment/refund records for the same product and month are possible in real payment operations.
--> Next step: No action
 
-**Value Check**
-**Cell code**
-```python
-payment_enriched.dtypes
-```
-
-**Output** 
-
-<img width="842" height="309" alt="Ảnh màn hình 2026-03-02 lúc 14 42 54" src="https://github.com/user-attachments/assets/42cd893e-a6b8-4417-9dfb-65f34126572c" />
-
-- **Incorrect data types:**
-
-  - None detected. All data is consistent with business sense.
--> Next step: No action
-
-**Cell code**
-```python
-payment_enriched['volume'].describe()
-```
-
-**Output**
-
-<img width="767" height="338" alt="Ảnh màn hình 2026-03-02 lúc 14 45 00" src="https://github.com/user-attachments/assets/513e14bd-0fea-40df-aa9b-f5e57088c9d7" />
-
+---
