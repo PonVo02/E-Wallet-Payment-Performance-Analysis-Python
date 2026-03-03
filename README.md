@@ -5,8 +5,10 @@ Date: ... 2025
 
 Tools Used: Python
 
-## Table of Contents
-
+## 📑 Table of Contents
+- [📖 Overview](Overview)
+- [📂 Dataset Description & Data Structure](Dataset-Description-&-Data-Structure)
+- [🔎 Final Conclusion & Recommendations](🔎-Final-Conclusion-&-Recommendations)
 ## Overview
 ### Objectives 
 This project analyzes e-wallet transaction and payment data to:
@@ -20,7 +22,7 @@ This project analyzes e-wallet transaction and payment data to:
 - Fintech stakeholders looking to monitor payment performance.
 - Product teams aiming to optimize e-wallet flows and reduce refund-related issues.
 
-## Dataset Description & Data Structure
+## 📂 Dataset Description & Data Structure
 📌 Data Source
 - Source: Internal e-wallet transaction records 
 - Format: `CSV`
@@ -31,7 +33,7 @@ This project analyzes e-wallet transaction and payment data to:
 - `transactions.csv`: 1,324,002 rows × 9 columns
 ---
 
-## 📊 Data Structure & Relationships
+### 📊 Data Structure & Relationships
 1) Tables Used
 
 This project uses three datasets:
@@ -46,7 +48,12 @@ Key Relationships
   
 ## 🧾 Table Schemas & Snapshots
 
+
 ### Table 1 — Products (`product.csv`)
+
+<details>
+	<summary> 👉🏻 click here </summary>
+	
 **493 rows × 3 columns**
 
 | Column | Type | Description |
@@ -54,10 +61,14 @@ Key Relationships
 | `product_id` | INT | Unique identifier for each product |
 | `category` | TEXT | Product category |
 | `team_own` | TEXT | Team responsible for the product |
-
+</details>
 
 
 ### Table 2 — Payment Report (`payment_report.csv`)
+
+<details>
+	<summary> 👉🏻 click here </summary>
+	
 **920 rows × 5 columns**
 
 | Column | Type | Description |
@@ -67,10 +78,14 @@ Key Relationships
 | `product_id` | INT | Associated product ID |
 | `source_id` | INT | Transaction source identifier |
 | `volume` | FLOAT | Total payment volume |
-
+</details>
 
 
 ### Table 3 — Transactions (`transactions.csv`)
+
+<details>
+	<summary> 👉🏻 click here </summary>
+	
 **1,324,002 rows × 9 columns**
 
 | Column | Type | Description |
@@ -84,6 +99,8 @@ Key Relationships
 | `receiver_id` | INT | Receiver account ID |
 | `extra_info` | TEXT | Additional transaction details |
 | `timeStamp` | TIMESTAMP | Transaction timestamp |
+
+</details>
 
 ---
 ## 🛠️ Main Process
