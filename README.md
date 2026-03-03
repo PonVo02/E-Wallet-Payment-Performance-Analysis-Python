@@ -42,9 +42,9 @@ This project uses three datasets:
 - `transactions.csv`: Detailed transaction-level records.
 
 Key Relationships
-	•	**product_id** connects 'product.csv' <-> 'payment_report.csv'.
-	•	**transaction_id** is the unique identifier in `transactions.csv` used to track individual transactions.
-	•	**source_id** in `payment_report.csv` is used to analyze payment sources, especially in refund-related breakdowns.
+- **product_id** connects 'product.csv' <-> 'payment_report.csv'.
+- **transaction_id** is the unique identifier in `transactions.csv` used to track individual transactions.
+- **source_id** in `payment_report.csv` is used to analyze payment sources, especially in refund-related breakdowns.
   
 ## 🧾 Table Schemas & Snapshots
 
