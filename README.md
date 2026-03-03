@@ -135,9 +135,9 @@ This project is analyzed through **two complementary tracks**:
 ### ✅ Track B — Analyze `transactions` Dataset (Transaction-level)
 
 **📌 Dataset Overview (`transactions.csv`)**
-- **Size:** 1,324,002 rows × 9 columns  
-- **Analytical grain:** 1 row = 1 transaction event  
-- **Fields:** amount (`volume`), transaction type (`transType`), sender/receiver (`sender_id`, `receiver_id`), status (`transStatus`), timestamp (`timeStamp`)
+- **Size:** 1,324,002 rows × 9 columns
+- **Analytical grain:** 1 row = 1 transaction
+- **Fields:** `transaction_id`, `merchant_id`, `volume`, `transType`, `sender_id`, `receiver_id`,`transStatus`,`extra_info` ,`timeStamp`)
 
 #### B1) Data Loading & Preparation 🧹
 
@@ -156,13 +156,113 @@ df.head()
 </details>
 
 #### B2) Data Quality Checks 🧪
-- Missing `sender_id` / `receiver_id`:
-  - Treat as potential **system-generated transactions** (e.g., top-up, refund, cashback)  
-  - Validate by checking distribution of `transType` and `transStatus` for missing-ID records
-- Validate `volume`, `transStatus`, `transType` are consistent with business meaning
+**1️⃣ Missing Values Validation** 
 
+**📍Observation**
+
+<details>
+<summary>👉🏻 Output (Missing Data)</summary>
+
+<img width="799" height="363" alt="Ảnh màn hình 2026-03-03 lúc 12 20 42" src="https://github.com/user-attachments/assets/60ebcc00-d8b1-4b54-a6f1-f7dcff4c7403" />
+
+</details>
+
+Missing values were detected in:
+- `sender_id`
+-  `receiver_id`
+	- Missing `sender_id` or `receiver_id` is expected in system-related transactions such as top-ups, refunds, or cashback.
+	- `extra_info` has a high number of missing values and does not affect core analysis, so it is ignored.
+  
+To determine whether this is a data quality issue or a system-defined behavior, we analyzed missing patterns by **transaction type**.
+
+**📍Evidence**
+
+<details>
+<summary>👉🏻 Show code & output (Transaction Type)</summary>
+
+```python
+df['transType'].value_counts()
+```
+<img width="751" height="326" alt="Ảnh màn hình 2026-03-03 lúc 12 17 40" src="https://github.com/user-attachments/assets/b7a8864d-2729-4ecb-9bfc-73dec64e1eee" />
+</details>
+
+<details>
+<summary>👉🏻 Show code & output (Missing by transType)</summary>
+
+```python
+df.groupby('transType')[['sender_id', 'receiver_id']].apply(lambda x: x.isna().sum())
+```
+<img width="613" height="293" alt="Ảnh màn hình 2026-03-03 lúc 12 24 49" src="https://github.com/user-attachments/assets/503743a6-8b23-4686-bd44-60590b03b491" />
+
+</details>
+
+**💡Key Patterns**:
+- `receiver_id` is missing exclusively in **transType 2**
+- `sender_id` is missing exclusively in **transType 22**
+- **TransType 30**: has both `sender_id` and `receiver_id` missing in a consistent pattern, all sender_id are missing and a portion of recevier_id are missing
+
+**❗️Interpretation**
+- Missing IDs are strongly associated with specific transaction types rather than occurring randomly across data set
+- This indicates that missing values are part of the system's transaction logic, rather than data quality errors.
+
+**❗️Conclusion**
+
+Missing `sender_id` and `receiver_id` are treated as structural characteristic of certain transaction types, not as data errors.
+
+**2️⃣Duplicate Transaction ID Check**
+
+<details>
+<summary>👉🏻 Show code & output (Check duplicate)</summary>
+
+```python
+df['transaction_id'].duplicated().sum()
+```
+<img width="464" height="28" alt="Ảnh màn hình 2026-03-03 lúc 13 00 14" src="https://github.com/user-attachments/assets/e1e710da-8b7a-464a-8f09-c2b50eca027f" />
+
+<details>
+
+<details>
+<summary>👉🏻 Show code & output (Show duplicate)</summary>
+
+```python
+df[df['transaction_id'].duplicated(keep=False)].head(10)
+```
+<img width="1251" height="355" alt="Ảnh màn hình 2026-03-03 lúc 13 01 23" src="https://github.com/user-attachments/assets/c1eb4287-65c1-47c6-9116-3a07b42486d4" />
+<details>
+
+**Finding🔎**
+Inspection shows that duplicates rows share identical:
+- `transaction_id`
+- `volume`
+- `sender_id`
+- `receiver_id`
+- `timeStamp`
+This suggests exact duplicate records rather than legitimate repeated business events.
+
+
+**3️⃣Transaction Amount Validation**
+
+<details>
+<summary>👉🏻 Show code & output (Numerical)</summary>
+
+```python
+df['volume'].describe()
+```
+
+
+<details>
+
+**📍Observation**
+- **Minimum value:** 1
+- **25%:** 10,000
+- **Median:** 30,000
+- **75%:** 100,000
+- Maximum value: 78,691,480
+
+**📌Assessment**
+- No negative values detected.
+- Maximum value remains within a plausible range for high-value transactions.
+- Distributionn is right-skewed, which is typical for financial transaction data
 
 ---
 
-
----
