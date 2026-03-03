@@ -5,7 +5,7 @@ Date: ... 2025
 
 Tools Used: Python
 
-##Table of Contents
+## Table of Contents
 
 ## Overview
 ### Objectives 
@@ -105,7 +105,7 @@ This project is analyzed through **two complementary tracks**:
 #### A2) Data Quality Checks 🧪
 - **Missing values:** check `category`, `team_own` after join
 	- Interpretation: missing values likely come from `product_id` not found in `product.csv` (unmatched metadata)
-	- Action: keep as “Unknown” or leave missing (no hard drop unless needed)
+	- Action: keep as “Unknown” or leave missing
 - **Duplicates:** check key (`report_month`, `product_id`, `source_id`)  
   - If duplicates appear mostly in `payment_group` = refund and `volumes` differ -> treat as **valid business events**, not data errors
 - 🔎 Data Validation
@@ -429,6 +429,8 @@ rf_contribution
 
 <img width="419" height="173" alt="Ảnh màn hình 2026-03-03 lúc 15 54 19" src="https://github.com/user-attachments/assets/75d6f135-dd61-49ba-a670-4a034f868679" />
 
+
+
 ### ✅ Define type of transactions ('transaction_type') for each row, given:
 - transType = 2 & merchant_id = 1205: Bank Transfer Transaction
 - transType = 2 & merchant_id = 2260: Withdraw Money Transaction
@@ -437,4 +439,77 @@ rf_contribution
 - transType = 8, merchant_id = 2250: Transfer Money Transaction
 - transType = 8 & others merchant_id: Split Bill Transaction
 - Remained cases are invalid transactions
+
+**Goal:** Create a new `transaction_type` field to classify each transaction based on `transType` and `merchant_id`. This standardizes raw system codes into clear business labels, enabling cleaner analysis by transaction type, easier pattern detection, and flagging invalid/unsupported transactions for data quality checks.
+
+**Code cell**
+```python
+ #tranTpe = 2 - Bank Transfer - Withdraw Money - Top Up Money
+def transaction_type_m(x):
+  if x['transType'] == 2:
+    if x['merchant_id'] == 1205:
+      return 'Bank Transfer'
+    elif x['merchant_id'] == 2260:
+      return 'Withdraw Money'
+    elif x['merchant_id'] == 2270:
+      return 'Top Up Money'
+    else:
+      return 'Payment'
+  # trantype = 8 - Tranfers Money - Split Bill
+  elif x['transType'] == 8:
+    if x['merchant_id'] == 2250:
+      return 'Transfer Money'
+    else:
+       return 'Split Bill'
+
+  # remain
+  else:
+    return ' Invalid'
+
+df['transaction_type'] = df.apply(transaction_type_m, axis=1)
+df['transaction_type'].value_counts()
+```
+
+**Output**
+
+<img width="346" height="325" alt="Ảnh màn hình 2026-03-03 lúc 18 13 10" src="https://github.com/user-attachments/assets/9a3db562-ecbd-4e38-bb97-71f28aaefebc" />
+
+### ✅ Performance Metrics by Transaction Type(Invalid).
+Summarize each valid transaction_type by:
+
+- Total number of transactions
+
+- Total transaction volume
+
+- Number of unique senders
+
+- Number of unique receivers
+
+This provides a clear comparison of activity and impact across transaction types.
+
+**Code Cell**
+```python
+# filter valid transactions
+df_valid = df[df['transaction_type'] != 'Invalid']
+
+# senders and receivers
+
+senders_receivers = (
+    df_valid.groupby('transaction_type').agg(
+        num_trans = ('transaction_id', 'count'),
+        total_volume = ('volume', 'sum'),
+        num_senders = ('sender_id', 'nunique'),
+        num_receivers = ('receiver_id','nunique')
+    )
+).sort_values('num_trans', ascending=False)
+
+senders_receivers
+```
+
+**Output**
+
+<img width="740" height="291" alt="Ảnh màn hình 2026-03-03 lúc 18 34 19" src="https://github.com/user-attachments/assets/62d426e1-0e5b-4998-b451-9c7234756597" />
+
+## 🔎 Final Conclusion & Recommendations
+
 
