@@ -219,7 +219,7 @@ df['transaction_id'].duplicated().sum()
 ```
 <img width="464" height="28" alt="Ảnh màn hình 2026-03-03 lúc 13 00 14" src="https://github.com/user-attachments/assets/e1e710da-8b7a-464a-8f09-c2b50eca027f" />
 
-<details>
+</details>
 
 <details>
 <summary>👉🏻 Show code & output (Show duplicate)</summary>
@@ -228,7 +228,7 @@ df['transaction_id'].duplicated().sum()
 df[df['transaction_id'].duplicated(keep=False)].head(10)
 ```
 <img width="1251" height="355" alt="Ảnh màn hình 2026-03-03 lúc 13 01 23" src="https://github.com/user-attachments/assets/c1eb4287-65c1-47c6-9116-3a07b42486d4" />
-<details>
+</details>
 
 **Finding🔎**
 Inspection shows that duplicates rows share identical:
@@ -250,7 +250,7 @@ df['volume'].describe()
 ```
 
 
-<details>
+</details>
 
 **📍Observation**
 - **Minimum value:** 1
@@ -265,4 +265,176 @@ df['volume'].describe()
 - Distributionn is right-skewed, which is typical for financial transaction data
 
 ---
+
+### 📊 Summary – Transactions Dataset
+
+#### 🔎 Data Types
+All columns have appropriate data types and align with business meaning.  
+No type conversion required.
+
+---
+
+#### 💰 Transaction Amount (`volume`)
+- All values are positive.
+- Distribution is right-skewed, which is typical for financial transaction data.
+- No unrealistic or abnormal negative values detected.
+
+---
+
+#### 🧩 Missing Data
+- Missing `sender_id` and `receiver_id` are structurally linked to specific transaction types (system-defined behavior).
+- `extra_info` is largely missing (~99%) and does not impact core analysis.
+
+No corrective cleaning is required for missing values.
+
+---
+
+#### 🔁 Duplicate Transactions
+- 28 duplicated `transaction_id` records detected.
+- Duplicated rows are **exactly identical across all fields**.
+
+Given the very small proportion relative to total records (1.3M+),  
+and since duplicates do not alter aggregated results materially,  
+they are documented but not removed for this analysis.
+
+---
+
+#### ✅ Final Assessment
+
+The transactions dataset is structurally consistent and analytically reliable.
+
+Observed data characteristics (missing IDs, minor duplicates) are either:
+- System-defined transaction logic, or  
+- Exact duplicated records with negligible analytical impact.
+
+The dataset is ready for further analysis.
+
+---
+
+
+## 🧠 Analysis
+
+### ✅ Top 3 Products by Total Revenue
+
+**Goal** Identify the **top 3 products generating the highest total revenue** to understand which products contribute most to overall income. This insight helps prioritize **sales focus, marketing budget, and product strategy** around the highest-performing items.
+
+**Cell code**
+```python
+top_3_products = (
+    payment_enriched.groupby('product_id')['volume'].sum().sort_values(ascending=False).head(3)
+)
+
+print('Top 3 product_ids with the highest volume:')
+print(top_3_products)
+```
+**Output**
+<img width="449" height="108" alt="Ảnh màn hình 2026-03-03 lúc 15 10 22" src="https://github.com/user-attachments/assets/7b5eb277-58ea-4d06-9135-1281c9065442" />
+
+
+### ✅ Validate Product Ownership (One Team per Product)
+
+Confirm that each `product_id` is assigned to **exactly one** owning team (`team_own`) to ensure clear accountability and prevent overlapping ownership across teams.
+
+**Code cell**
+```python
+abnormal_products = (
+    payment_enriched.groupby('product_id')['team_own']
+    .nunique()
+    .reset_index(name='team_count')
+    .query('team_count > 1'))
+
+if abnormal_products.empty:
+  print('No abnormal products found.')
+else:
+  print('Abnormal products found:')
+  print(abnormal_products)
+```
+
+**Output**
+
+<img width="310" height="25" alt="Ảnh màn hình 2026-03-03 lúc 15 20 57" src="https://github.com/user-attachments/assets/39de0292-e9a5-4edf-8b14-b04070570d90" />
+
+
+### ✅ Team Performance Check: Lowest Volume Since Q2 2023 & Category Contribution Breakdown
+
+**Cell code**
+```python
+# filter Q2.2023
+payment_enriched['report_month'] = pd.to_datetime(payment_enriched['report_month'])
+
+payment_enriched_q2 = payment_enriched[payment_enriched['report_month'] >= '2023-04-01']
+
+#lowest pfm
+team_volume = (payment_enriched_q2.groupby('team_own')['volume']
+                   .sum()
+                   .sort_values())
+
+team_lowest = team_volume.index[0]
+team_lowest_volume = team_volume.iloc[0]
+
+print(f'Team with the lowest performance: {team_lowest}')
+print(f'Total volume: {team_lowest_volume}')
+
+# Category contributing the least to that team
+
+category_contributing = (
+    payment_enriched_q2[payment_enriched_q2['team_own'] == team_lowest]
+    .groupby('category')['volume']
+    .sum()
+    .sort_values()
+    .head(1))
+
+least_category = category_contributing.index[0]
+least_category_volume = category_contributing.iloc[0]
+
+print("Least-contributing category:", least_category)
+print("Category volume:", least_category_volume)
+
+```
+**Output**
+
+<img width="561" height="76" alt="Ảnh màn hình 2026-03-03 lúc 15 42 23" src="https://github.com/user-attachments/assets/abf47929-eee6-4bd5-94ce-fcd970176c45" />
+
+
+
+### ✅ Highest-Contributing Refund Source (source_id)
+**Goal:** Measure refund contribution by `source_id` (filter `payment_group = 'refund'`) and identify the source that generates the highest total refund volume.
+
+**Code cell**
+```python
+# Filter refund transactions
+rf_payment_enriched = payment_enriched[payment_enriched['payment_group'] == 'refund']
+
+# Refund volume by source_id + contribution %
+rf_contribution = (
+    rf_payment_enriched.groupby('source_id')['volume']
+    .sum()
+    .sort_values(ascending=False)
+    .reset_index(name='refund_volume')
+)
+
+rf_contribution["pct_contribute"] = rf_contribution['refund_volume'] / rf_contribution['refund_volume'].sum() * 100
+
+top_source_id = rf_contribution.iloc[0]['source_id']
+top_pct = rf_contribution.iloc[0]['pct_contribute']
+
+print("Top refund source_id:", top_source_id)
+print("Contribution (%):", top_pct)
+
+rf_contribution
+
+```
+
+**Output**
+
+<img width="419" height="173" alt="Ảnh màn hình 2026-03-03 lúc 15 54 19" src="https://github.com/user-attachments/assets/75d6f135-dd61-49ba-a670-4a034f868679" />
+
+### ✅ Define type of transactions ('transaction_type') for each row, given:
+- transType = 2 & merchant_id = 1205: Bank Transfer Transaction
+- transType = 2 & merchant_id = 2260: Withdraw Money Transaction
+- transType = 2 & merchant_id = 2270: Top Up Money Transaction
+- transType = 2 & others merchant_id: Payment Transaction
+- transType = 8, merchant_id = 2250: Transfer Money Transaction
+- transType = 8 & others merchant_id: Split Bill Transaction
+- Remained cases are invalid transactions
 
