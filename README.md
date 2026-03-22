@@ -528,6 +528,64 @@ senders_receivers
 
 <img width="740" height="291" alt="Ảnh màn hình 2026-03-03 lúc 18 34 19" src="https://github.com/user-attachments/assets/62d426e1-0e5b-4998-b451-9c7234756597" />
 
+
 ## 🔎 Final Conclusion & Recommendations
+
+### 📊 Key Findings
+
+- **Payment transactions** account for the highest number of transactions, indicating that the platform is primarily used for daily payments rather than money transfer or financial services.
+
+- **Money transfer and top-up transactions** contribute significantly to total transaction volume, suggesting these are high-value activities despite lower transaction counts.
+
+- A portion of transactions is classified as **Invalid**, highlighting potential data quality issues or system misclassification.
+
+- The number of **unique senders and receivers** varies significantly across transaction types, indicating different user behavior patterns (e.g., frequent small payments vs. less frequent high-value transfers).
+
+---
+
+### 🧠 Business Insights
+
+- The platform is currently **transaction-heavy but value-concentrated**:
+  - High-frequency → Payment (daily usage)
+  - High-value → Transfer / Top-up
+
+- Different transaction types reflect **distinct user intents**:
+  - Payment → consumption behavior
+  - Transfer → peer-to-peer usage
+  - Top-up → wallet funding behavior
+
+- Data quality issues (Invalid transactions) may **impact reporting accuracy and business decisions**.
+
+---
+
+### 🚀 Recommendations
+
+#### 1. Optimize Core Revenue Drivers
+- Focus on **Payment transactions** by improving user experience (UX), speed, and reliability to retain high-frequency users.
+- Introduce incentives (cashback, discounts) to increase conversion and usage frequency.
+
+#### 2. Increase High-Value Transaction Growth
+- Promote **Top-up and Transfer services** through campaigns or partnerships (e.g., bank integrations, promotions).
+- Encourage users to increase wallet balance and transaction size.
+
+#### 3. User Segmentation Strategy
+- Segment users based on transaction behavior:
+  - High-frequency (payment users)
+  - High-value (transfer/top-up users)
+- Apply targeted campaigns:
+  - Loyalty programs for frequent users
+  - Upsell campaigns for high-value users
+
+#### 4. Improve Data Quality & Monitoring
+- Investigate **Invalid transactions**:
+  - Identify root causes (system errors, missing mapping rules)
+  - Implement validation rules in data pipeline
+- Set up monitoring dashboards to track anomalies in real-time
+
+---
+
+### 🎯 Final Takeaway
+
+This analysis shows that while the platform has strong engagement in daily transactions, there is an opportunity to **optimize revenue by balancing transaction volume and value**, while also improving data quality to ensure reliable decision-making.
 
 
